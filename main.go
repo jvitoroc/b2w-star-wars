@@ -21,12 +21,15 @@ func setBasics(next http.Handler) http.Handler {
 }
 
 func main() {
+	// << carregar as variaveis locais
 	err := godotenv.Load()
 
 	if err != nil {
 		panic(err)
 	}
+	// >>
 
+	// << conectar ao banco de dados
 	ctx, cancel := utils.WithTimeout(10)
 	defer cancel()
 	db, disconnect, err := utils.ConnectMongoDB(ctx)
@@ -36,7 +39,9 @@ func main() {
 	}
 
 	defer disconnect()
+	// >>
 
+	// << inicializa o server
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
 	allowedHeaders := handlers.AllowedHeaders([]string{"*"})
 	allowedMethods := handlers.AllowedMethods([]string{"POST, GET, PATCH, DELETE"})
@@ -45,8 +50,8 @@ func main() {
 	r.StrictSlash(false)
 	r.Use(setBasics)
 
-	// inicializa os handlers e models da API
 	resources.Initialize(r, db)
 
 	http.ListenAndServe(":"+os.Getenv("API_PORT"), handlers.CORS(allowedOrigins, allowedHeaders, allowedMethods)(r))
+	// >>
 }

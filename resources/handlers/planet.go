@@ -20,7 +20,7 @@ func initializePlanet(r *mux.Router) {
 	sr := r.PathPrefix("/planet").Subrouter()
 	sr.Handle("/", appHandler(createPlanetHandler)).Methods("POST")
 	sr.Handle("/{id:[a-z0-9]+}", appHandler(getPlanetByIDHandler)).Methods("GET")
-	sr.Handle("/", appHandler(getPlanetHandler)).Queries("name", "{name}").Methods("GET")
+	sr.Handle("/", appHandler(getPlanetHandler)).Queries("search", "{search}").Methods("GET")
 	sr.Handle("/", appHandler(getPlanetsHandler)).Methods("GET")
 	sr.Handle("/{id:[a-z0-9]+}", appHandler(deletePlanetHandler)).Methods("DELETE")
 }
@@ -38,8 +38,13 @@ func createPlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 
 	var id primitive.ObjectID
 	var err *common.Error
+	var filmsAppearedIn int
 
-	if id, err = repo.CreatePlanet(*requestBody.Name, *requestBody.Climate, *requestBody.Terrain); err != nil {
+	if filmsAppearedIn, err = getFilmsAppearedIn(*requestBody.Name); err != nil {
+		return err
+	}
+
+	if id, err = repo.CreatePlanet(*requestBody.Name, *requestBody.Climate, *requestBody.Terrain, filmsAppearedIn); err != nil {
 		return err
 	}
 
@@ -85,7 +90,7 @@ func getPlanetByIDHandler(w http.ResponseWriter, r *http.Request) *common.Error 
 			"message": "Planet successfully retrieved.",
 			"planet":  planet,
 		},
-		http.StatusCreated,
+		http.StatusOK,
 		w,
 	)
 
@@ -93,11 +98,12 @@ func getPlanetByIDHandler(w http.ResponseWriter, r *http.Request) *common.Error 
 }
 
 func getPlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
-	var planet *repo.Planet
+	var results []*repo.Planet
 	var err *common.Error
 
-	name := r.URL.Query().Get("name")
-	planet, err = repo.GetPlanetByName(name)
+	results, err = repo.GetMatchedPlanets(map[string]string{
+		"name": r.URL.Query().Get("search"),
+	})
 
 	if err != nil {
 		return err
@@ -105,10 +111,10 @@ func getPlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 
 	respond(
 		map[string]interface{}{
-			"message": "Planet successfully retrieved.",
-			"planet":  planet,
+			"message": "Planets successfully retrieved.",
+			"results": results,
 		},
-		http.StatusCreated,
+		http.StatusOK,
 		w,
 	)
 
@@ -127,7 +133,7 @@ func getPlanetsHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 			"message": "Planets successfully retrieved.",
 			"planets": planets,
 		},
-		http.StatusCreated,
+		http.StatusOK,
 		w,
 	)
 
@@ -135,6 +141,26 @@ func getPlanetsHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 }
 
 func deletePlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
+	id, _ := extractParam("id", r)
+
+	var oid primitive.ObjectID
+	var err error
+
+	if oid, err = primitive.ObjectIDFromHex(id); err != nil {
+		return common.CreateGenericBadRequestError(err)
+	}
+
+	if err := repo.DeletePlanet(oid); err != nil {
+		return err
+	}
+
+	respond(
+		map[string]interface{}{
+			"message": "Planet successfully deleted.",
+		},
+		http.StatusOK,
+		w,
+	)
 
 	return nil
 }
