@@ -247,7 +247,7 @@ func TestGetAllPlanetsAndCompare(t *testing.T) {
 func TestDeletePlanet(t *testing.T) {
 	clearDatabase()
 
-	response := sendRequest("POST", "/planet/", []byte(`{"name":"Tatooine", "climate": "temperate", "terrain": "grasslands, mountains"}`))
+	response := sendRequest("POST", "/planet/", tatooineBytes)
 	if !checkResponseCode(t, http.StatusCreated, response.Code) {
 		return
 	}
