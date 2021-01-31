@@ -9,7 +9,7 @@ const (
 	ENOTFOUND     = 404
 
 	EMINTERNAL = "An internal error occurred."
-	EMINVALID  = "An error ocurred while processing the request."
+	EMINVALID  = "Found something invalid in the request parameters."
 	EMSEVERAL  = "One or more errors ocurred while processing the request."
 )
 

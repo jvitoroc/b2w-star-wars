@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jvitoroc/b2w-star-wars/resources/common"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type SWAPIPlanet struct {
@@ -42,14 +43,13 @@ func respondWithError(err common.Error, w http.ResponseWriter) {
 
 func getFilmsAppearedIn(planetName string) (int, *common.Error) {
 	planetName = strings.Trim(strings.ToLower(planetName), "\n\r ")
-	resp, err := http.Get("https://swapi.dev/api/planets?search=" + planetName)
 
+	resp, err := http.Get("https://swapi.dev/api/planets?search=" + planetName)
 	if err != nil {
 		return 0, common.CreateGenericInternalError(err)
 	}
 
 	var result SWAPISearchResult
-
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return 0, common.CreateGenericInternalError(err)
 	}
@@ -65,8 +65,19 @@ func getFilmsAppearedIn(planetName string) (int, *common.Error) {
 	return 0, nil
 }
 
+func stringToObjectID(id string) (*primitive.ObjectID, *common.Error) {
+	oid, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+		return nil, common.CreateGenericBadRequestError(err)
+	}
+
+	return &oid, nil
+}
+
 func extractParam(param string, r *http.Request) (string, bool) {
 	value, ok := mux.Vars(r)[param]
+
 	return value, ok
 }
 

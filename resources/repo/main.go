@@ -7,7 +7,7 @@ import (
 var planetsCollection *mongo.Collection
 var db *mongo.Client
 
-func Initialize(_db *mongo.Client) {
+func Initialize(_db *mongo.Client, databaseName string) {
 	db = _db
-	planetsCollection = db.Database("b2w").Collection("planets")
+	planetsCollection = db.Database(databaseName).Collection("planets")
 }

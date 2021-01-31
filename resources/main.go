@@ -7,7 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func Initialize(r *mux.Router, db *mongo.Client) {
-	repo.Initialize(db)
+func Initialize(r *mux.Router, db *mongo.Client, databaseName string) {
+	repo.Initialize(db, databaseName)
 	handlers.Initialize(r)
 }

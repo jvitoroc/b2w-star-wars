@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jvitoroc/b2w-star-wars/resources/common"
 	"github.com/jvitoroc/b2w-star-wars/resources/repo"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type PlanetRequestBody struct {
@@ -20,7 +19,7 @@ func initializePlanet(r *mux.Router) {
 	sr := r.PathPrefix("/planet").Subrouter()
 	sr.Handle("/", appHandler(createPlanetHandler)).Methods("POST")
 	sr.Handle("/{id:[a-z0-9]+}", appHandler(getPlanetByIDHandler)).Methods("GET")
-	sr.Handle("/", appHandler(getPlanetHandler)).Queries("search", "{search}").Methods("GET")
+	sr.Handle("/", appHandler(getMatchedPlanetHandler)).Queries("search", "{search}").Methods("GET")
 	sr.Handle("/", appHandler(getPlanetsHandler)).Methods("GET")
 	sr.Handle("/{id:[a-z0-9]+}", appHandler(deletePlanetHandler)).Methods("DELETE")
 }
@@ -36,27 +35,24 @@ func createPlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 		return err
 	}
 
-	var id primitive.ObjectID
-	var err *common.Error
-	var filmsAppearedIn int
-
-	if filmsAppearedIn, err = getFilmsAppearedIn(*requestBody.Name); err != nil {
+	filmsAppearedIn, err := getFilmsAppearedIn(*requestBody.Name)
+	if err != nil {
 		return err
 	}
 
-	if id, err = repo.CreatePlanet(*requestBody.Name, *requestBody.Climate, *requestBody.Terrain, filmsAppearedIn); err != nil {
+	id, err := repo.CreatePlanet(*requestBody.Name, *requestBody.Climate, *requestBody.Terrain, filmsAppearedIn)
+	if err != nil {
 		return err
 	}
 
-	var planet *repo.Planet
-
-	if planet, err = repo.GetPlanetByID(id); err != nil {
+	planet, err := repo.GetPlanetByID(id)
+	if err != nil {
 		return err
 	}
 
 	respond(
 		map[string]interface{}{
-			"message": "Planet successfully created.",
+			"message": "The planet was successfully created.",
 			"planet":  planet,
 		},
 		http.StatusCreated,
@@ -69,25 +65,19 @@ func createPlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 func getPlanetByIDHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 	id, _ := extractParam("id", r)
 
-	var oid primitive.ObjectID
-	var _err error
-
-	if oid, _err = primitive.ObjectIDFromHex(id); _err != nil {
-		return common.CreateGenericBadRequestError(_err)
+	oid, err := stringToObjectID(id)
+	if err != nil {
+		return err
 	}
 
-	var planet *repo.Planet
-	var err *common.Error
-
-	planet, err = repo.GetPlanetByID(oid)
-
+	planet, err := repo.GetPlanetByID(*oid)
 	if err != nil {
 		return err
 	}
 
 	respond(
 		map[string]interface{}{
-			"message": "Planet successfully retrieved.",
+			"message": "The planet was successfully retrieved.",
 			"planet":  planet,
 		},
 		http.StatusOK,
@@ -97,11 +87,8 @@ func getPlanetByIDHandler(w http.ResponseWriter, r *http.Request) *common.Error 
 	return nil
 }
 
-func getPlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
-	var results []*repo.Planet
-	var err *common.Error
-
-	results, err = repo.GetMatchedPlanets(map[string]string{
+func getMatchedPlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
+	results, err := repo.GetMatchedPlanets(map[string]string{
 		"name": r.URL.Query().Get("search"),
 	})
 
@@ -111,7 +98,7 @@ func getPlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 
 	respond(
 		map[string]interface{}{
-			"message": "Planets successfully retrieved.",
+			"message": "The planets were successfully retrieved.",
 			"results": results,
 		},
 		http.StatusOK,
@@ -122,7 +109,7 @@ func getPlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 }
 
 func getPlanetsHandler(w http.ResponseWriter, r *http.Request) *common.Error {
-	planets, err := repo.GetPlanets()
+	planets, err := repo.GetAllPlanets()
 
 	if err != nil {
 		return err
@@ -130,7 +117,7 @@ func getPlanetsHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 
 	respond(
 		map[string]interface{}{
-			"message": "Planets successfully retrieved.",
+			"message": "The planets were successfully retrieved.",
 			"planets": planets,
 		},
 		http.StatusOK,
@@ -143,20 +130,18 @@ func getPlanetsHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 func deletePlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 	id, _ := extractParam("id", r)
 
-	var oid primitive.ObjectID
-	var err error
-
-	if oid, err = primitive.ObjectIDFromHex(id); err != nil {
-		return common.CreateGenericBadRequestError(err)
+	oid, err := stringToObjectID(id)
+	if err != nil {
+		return err
 	}
 
-	if err := repo.DeletePlanet(oid); err != nil {
+	if err := repo.DeletePlanet(*oid); err != nil {
 		return err
 	}
 
 	respond(
 		map[string]interface{}{
-			"message": "Planet successfully deleted.",
+			"message": "The planet was successfully deleted.",
 		},
 		http.StatusOK,
 		w,
@@ -167,9 +152,11 @@ func deletePlanetHandler(w http.ResponseWriter, r *http.Request) *common.Error {
 
 func extractPlanet(planet *PlanetRequestBody, r *http.Request) *common.Error {
 	err := json.NewDecoder(r.Body).Decode(planet)
+
 	if err != nil {
 		return common.CreateGenericBadRequestError(err)
 	}
+
 	return nil
 }
 
