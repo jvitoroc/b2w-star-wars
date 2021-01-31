@@ -25,7 +25,7 @@ Para testar a aplicação, executar o seguinte comando dentro da pasta raiz do p
 **Exemplo de resposta**
 ```json
 {
-    "message": "Planet successfully created.",
+    "message": "The planet was successfully created.",
     "planet": {
         "id": "6015b48eccd6e8fa2e01f4d8",
         "name": "Tatooine",
@@ -42,7 +42,7 @@ ___
 **Exemplo de resposta**
 ```json
 {
-    "message": "Planets successfully retrieved.",
+    "message": "The planets were successfully retrieved.",
     "planets": [
         {
             "id": "6015b54bccd6e8fa2e01f4db",
@@ -70,7 +70,7 @@ ___
 **Exemplo de resposta**
 ```json
 {
-    "message": "Planet successfully retrieved.",
+    "message": "The planet was successfully retrieved.",
     "planet": {
         "id": "6015b565ccd6e8fa2e01f4dc",
         "name": "Alderaan",
@@ -89,7 +89,7 @@ ___
 **Exemplo de resposta**
 ```json
 {
-    "message": "Planets successfully retrieved.",
+    "message": "The planets were successfully retrieved.",
     "results": [
         {
             "id": "6015b565ccd6e8fa2e01f4dc",
@@ -110,6 +110,6 @@ ___
 **Exemplo de resposta**
 ```json
 {
-    "message": "Planet successfully deleted."
+    "message": "The planet was successfully deleted."
 }
 ```
