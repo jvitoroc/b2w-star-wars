@@ -3,6 +3,12 @@
 
 API desenvolvida para o desafio técnico da vaga de Desenvolvedor Go na B2W. 
 
+## Testes
+
+Para testar a aplicação, executar o seguinte comando dentro da pasta raiz do projeto:
+
+> go test -v
+
 ## Documentação
 
 ### [POST] Criar um novo planeta
